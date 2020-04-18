@@ -218,8 +218,8 @@ setWindowClosure wnd closure = do
   fpOld <- c_SetWindowLongPtr wnd (#{const GWLP_USERDATA})
                               (castPtr (castFunPtrToPtr fp))
   if fpOld == nullPtr 
-	  then return Nothing
-	  else return $ Just $ castPtrToFunPtr . intPtrToPtr . fromIntegral $ fp
+     then return Nothing
+     else return $ Just $ castPtrToFunPtr . intPtrToPtr . fromIntegral $ fp
 
 {- Note [SetWindowLongPtrW]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,8 +300,8 @@ foreign import WINDOWS_CCONV "windows.h DefWindowProcW"
 freeWindowProc :: HWND -> IO ()
 freeWindowProc hwnd = do
    fp <- c_GetWindowLongPtr hwnd (#{const GWLP_USERDATA})
-	unless (fp == nullPtr) $ 
-		freeHaskellFunPtr $ castPtrToFunPtr . intPtrToPtr . fromIntegral $ fp
+   unless (fp == nullPtr) $ 
+      freeHaskellFunPtr $ castPtrToFunPtr . intPtrToPtr . fromIntegral $ fp
 
 
 ----------------------------------------------------------------
