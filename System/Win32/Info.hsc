@@ -96,6 +96,30 @@ type SystemColor   = UINT
  , cOLOR_BTNHIGHLIGHT   = COLOR_BTNHIGHLIGHT
  }
 
+systemColors :: [SystemColor]
+systemColors = 
+  [ cOLOR_ACTIVEBORDER
+  , cOLOR_ACTIVECAPTION
+  , cOLOR_APPWORKSPACE
+  , cOLOR_BACKGROUND
+  , cOLOR_BTNFACE
+  , cOLOR_BTNSHADOW
+  , cOLOR_BTNTEXT
+  , cOLOR_CAPTIONTEXT
+  , cOLOR_GRAYTEXT
+  , cOLOR_HIGHLIGHT
+  , cOLOR_HIGHLIGHTTEXT
+  , cOLOR_INACTIVEBORDER
+  , cOLOR_INACTIVECAPTION
+  , cOLOR_MENU
+  , cOLOR_MENUTEXT
+  , cOLOR_SCROLLBAR
+  , cOLOR_WINDOW
+  , cOLOR_WINDOWFRAME
+  , cOLOR_WINDOWTEXT
+  ]
+
+ 
 -- %fun GetSysColor :: SystemColor -> IO COLORREF
 -- %fun SetSysColors :: [(SystemColor,COLORREF)] -> IO ()
 
@@ -368,6 +392,14 @@ getUserName =
         failIfFalse_ "GetUserName" $ c_GetUserName c_str c_len
         len <- peek c_len
         peekTStringLen (c_str, fromIntegral len - 1)
+
+----------------------------------------------------------------
+-- DPI
+----------------------------------------------------------------
+
+foreign import ccall "windows.h GetDpiForSystem" 
+  getDpiForSystem :: IO UINT
+
 
 ----------------------------------------------------------------
 -- End

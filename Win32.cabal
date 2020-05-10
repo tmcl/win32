@@ -1,5 +1,5 @@
 name:           Win32
-version:        2.8.5.0
+version:        2.8.5.6
 license:        BSD3
 license-file:   LICENSE
 author:         Alastair Reid, shelarcy, Tamar Christina
@@ -95,6 +95,7 @@ Library
         System.Win32.Exception.Unsupported
         System.Win32.HardLink
         System.Win32.Info.Computer
+        System.Win32.Info.Parameters
         System.Win32.Info.Version
         System.Win32.String
         System.Win32.SymbolicLink

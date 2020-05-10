@@ -158,6 +158,7 @@ type WindowMessage   = DWORD
  , wM_QUEUESYNC         = WM_QUEUESYNC
  , wM_USER              = WM_USER
  , wM_APP               = WM_APP
+ , wM_DPICHANGED        = 0x02E0
  }
 
 registerWindowMessage :: String -> IO WindowMessage

@@ -21,7 +21,8 @@ import Graphics.Win32.Message (WindowMessage)
 import Graphics.Win32.Window (ClassName, Pos, WindowStyle, maybePos)
 import Graphics.Win32.Window (c_CreateWindowEx)
 import System.IO.Unsafe (unsafePerformIO)
-import System.Win32.Types (HANDLE, UINT, maybePtr, newTString, withTString)
+import System.Win32.Types (WORD, UINT)
+import System.Win32.Types (HANDLE, maybePtr, newTString, withTString)
 import System.Win32.Types (failIfFalse_, failIfNull, failIfZero)
 import Foreign.Ptr (nullPtr)
 
@@ -48,6 +49,21 @@ type ButtonStyle   = WindowStyle
  , bS_LEFTTEXT          = BS_LEFTTEXT
  , bS_USERBUTTON        = BS_USERBUTTON
  }
+
+type MessageIdentifier = WORD
+#{enum MessageIdentifier,
+, bN_CLICKED = BN_CLICKED
+, bN_PAINT = BN_PAINT
+, bN_HILITE = BN_HILITE
+, bN_UNHILITE = BN_UNHILITE
+, bN_DISABLE = BN_DISABLE
+, bN_DOUBLECLICKED = BN_DOUBLECLICKED
+, bN_PUSHED = BN_PUSHED
+, bN_UNPUSHED = BN_UNPUSHED
+, bN_DBLCLK = BN_DBLCLK
+, bN_SETFOCUS = BN_SETFOCUS
+, bN_KILLFOCUS = BN_KILLFOCUS
+}
 
 createButton
   :: String -> WindowStyle -> ButtonStyle

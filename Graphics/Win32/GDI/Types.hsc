@@ -378,6 +378,95 @@ cLR_INVALID = #{const CLR_INVALID}
  }
 
 ----------------------------------------------------------------
+-- Font types
+----------------------------------------------------------------
+
+{-- A logical font --}
+data LOGFONTW = LOGFONTW
+  { lfHeight :: LONG
+  , lfWidth :: LONG
+  , lfEscapement :: LONG
+  , lfOrientation :: LONG
+  , lfWeight :: LONG
+  , lfItalic :: BYTE
+  , lfUnderline :: BYTE
+  , lfStrikeOut :: BYTE
+  , lfCharSet :: BYTE
+  , lfOutPrecision :: BYTE
+  , lfClipPrecision :: BYTE
+  , lfQuality :: BYTE
+  , lfPitchAndFamily :: BYTE
+  , lfFaceName :: LPCTSTR
+  }
+instance Storable LOGFONTW where
+  sizeOf _ = #{size LOGFONTW}
+  alignment _ = #{alignment LOGFONTW}
+  poke p LOGFONTW 
+      { lfHeight = lfHeight'
+      , lfWidth = lfWidth'
+      , lfEscapement = lfEscapement'
+      , lfOrientation = lfOrientation'
+      , lfWeight = lfWeight'
+      , lfItalic = lfItalic'
+      , lfUnderline = lfUnderline'
+      , lfStrikeOut = lfStrikeOut'
+      , lfCharSet = lfCharSet'
+      , lfOutPrecision = lfOutPrecision'
+      , lfClipPrecision = lfClipPrecision'
+      , lfQuality = lfQuality'
+      , lfPitchAndFamily = lfPitchAndFamily'
+      , lfFaceName = lfFaceName'
+      } = do
+    #{poke LOGFONTW,lfHeight} p           lfHeight'         
+    #{poke LOGFONTW,lfWidth} p            lfWidth'          
+    #{poke LOGFONTW,lfEscapement} p       lfEscapement'     
+    #{poke LOGFONTW,lfOrientation} p      lfOrientation'    
+    #{poke LOGFONTW,lfWeight} p           lfWeight'         
+    #{poke LOGFONTW,lfItalic} p           lfItalic'         
+    #{poke LOGFONTW,lfUnderline} p        lfUnderline'      
+    #{poke LOGFONTW,lfStrikeOut} p        lfStrikeOut'      
+    #{poke LOGFONTW,lfCharSet} p          lfCharSet'        
+    #{poke LOGFONTW,lfOutPrecision} p     lfOutPrecision'   
+    #{poke LOGFONTW,lfClipPrecision} p    lfClipPrecision'  
+    #{poke LOGFONTW,lfQuality} p          lfQuality'        
+    #{poke LOGFONTW,lfPitchAndFamily} p   lfPitchAndFamily' 
+    #{poke LOGFONTW,lfFaceName} p         lfFaceName' 
+       
+    
+  peek p = do
+    lfHeight'         <- #{peek LOGFONTW,lfHeight} p
+    lfWidth'          <- #{peek LOGFONTW,lfWidth} p
+    lfEscapement'     <- #{peek LOGFONTW,lfEscapement} p
+    lfOrientation'    <- #{peek LOGFONTW,lfOrientation} p
+    lfWeight'         <- #{peek LOGFONTW,lfWeight} p
+    lfItalic'         <- #{peek LOGFONTW,lfItalic} p
+    lfUnderline'      <- #{peek LOGFONTW,lfUnderline} p
+    lfStrikeOut'      <- #{peek LOGFONTW,lfStrikeOut} p
+    lfCharSet'        <- #{peek LOGFONTW,lfCharSet} p
+    lfOutPrecision'   <- #{peek LOGFONTW,lfOutPrecision} p
+    lfClipPrecision'  <- #{peek LOGFONTW,lfClipPrecision} p
+    lfQuality'        <- #{peek LOGFONTW,lfQuality} p
+    lfPitchAndFamily' <- #{peek LOGFONTW,lfPitchAndFamily} p
+    lfFaceName'       <- #{peek LOGFONTW,lfFaceName} p
+                                   
+    return LOGFONTW
+      { lfHeight = lfHeight'
+      , lfWidth = lfWidth'
+      , lfEscapement = lfEscapement'
+      , lfOrientation = lfOrientation'
+      , lfWeight = lfWeight'
+      , lfItalic = lfItalic'
+      , lfUnderline = lfUnderline'
+      , lfStrikeOut = lfStrikeOut'
+      , lfCharSet = lfCharSet'
+      , lfOutPrecision = lfOutPrecision'
+      , lfClipPrecision = lfClipPrecision'
+      , lfQuality = lfQuality'
+      , lfPitchAndFamily = lfPitchAndFamily'
+      , lfFaceName = lfFaceName'
+      }
+
+----------------------------------------------------------------
 -- Miscellaneous primitives
 ----------------------------------------------------------------
 

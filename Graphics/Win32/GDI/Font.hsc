@@ -182,9 +182,6 @@ foreign import WINDOWS_CCONV unsafe "windows.h CreateFontW"
 --   weight | bold      = fW_BOLD
 --          | otherwise = fW_NORMAL
 
-
--- missing CreateFontIndirect from WinFonts.ss; GSL ???
-
 foreign import WINDOWS_CCONV unsafe "windows.h DeleteObject"
   deleteFont :: HFONT -> IO ()
 
@@ -203,6 +200,17 @@ type StockFont      = WORD
 
 foreign import WINDOWS_CCONV unsafe "windows.h GetStockObject"
   getStockFont :: StockFont -> IO HFONT
+
+-------------------------------------------------------------
+
+foreign import WINDOWS_CCONV unsafe "windows.h CreateFontIndirectW"
+  c_CreateFontIndirect :: Ptr LOGFONTW -> IO HFONT
+
+{-- don't forget to delete it! --}
+createFontIndirect :: LOGFONTW -> IO HFONT
+createFontIndirect logFont = do
+  with logFont c_CreateFontIndirect
+
 
 ----------------------------------------------------------------
 -- End

@@ -16,16 +16,17 @@
 
 module Graphics.Win32.Window where
 
+import Control.Exception
 import Control.Monad (liftM, when, unless)
 import Data.Maybe (fromMaybe)
 import Data.Int (Int32)
 import Foreign.ForeignPtr (withForeignPtr)
-import Foreign.Marshal.Utils (maybeWith)
+import Foreign.Marshal.Utils (maybeWith, with)
 import Foreign.Marshal.Alloc (allocaBytes)
 import Foreign.Marshal.Array (allocaArray)
 import Foreign.Ptr (FunPtr, Ptr, castFunPtrToPtr, castPtr, nullPtr)
-import Foreign.Ptr (intPtrToPtr, castPtrToFunPtr, freeHaskellFunPtr)
-import Foreign.Storable (pokeByteOff)
+import Foreign.Ptr (intPtrToPtr, ptrToIntPtr, castPtrToFunPtr, freeHaskellFunPtr)
+import Foreign.Storable (pokeByteOff, Storable(..))
 import Foreign.C.Types (CIntPtr(..))
 import Graphics.Win32.GDI.Types (HBITMAP, HCURSOR, HDC, HDWP, HRGN, HWND, PRGN)
 import Graphics.Win32.GDI.Types (HBRUSH, HICON, HMENU, prim_ChildWindowFromPoint)
@@ -38,7 +39,9 @@ import System.Win32.Types (ATOM, maybePtr, newTString, ptrToMaybe, numToMaybe)
 import System.Win32.Types (Addr, BOOL, DWORD, INT, LONG, LRESULT, UINT, WPARAM)
 import System.Win32.Types (HANDLE, HINSTANCE, LONG_PTR, LPARAM, LPCTSTR)
 import System.Win32.Types (LPTSTR, LPVOID, withTString, peekTString)
-import System.Win32.Types (failIf, failIf_, failIfFalse_, failIfNull, maybeNum, failUnlessSuccess, getLastError, errorWin)
+import System.Win32.Types (failIf, failIf_, failIfFalse_, failIfNull, failIfZero)
+import System.Win32.Types (maybeNum, failUnlessSuccess, getLastError, errorWin)
+import System.Win32.Info (SystemColor, systemColors)
 
 ##include "windows_cconv.h"
 
@@ -121,6 +124,91 @@ foreign import WINDOWS_CCONV unsafe "windows.h RegisterClassW"
 
 foreign import WINDOWS_CCONV unsafe "windows.h UnregisterClassW"
   unregisterClass :: ClassName -> HINSTANCE -> IO ()
+
+
+data WNDCLASSEXW = WNDCLASSEXW
+  { wxStyle :: ClassStyle
+  , wxWndProc :: FunPtr WindowClosure
+  , wxClassExtra :: INT
+  , wxWindowExtra :: INT
+  , wxHInstance :: HINSTANCE
+  , wxHIcon :: Maybe HICON
+  , wxHCursor :: Maybe HCURSOR
+  , wxBackground :: Maybe (Either HBRUSH SystemColor)
+  , wxMenuName :: Maybe LPCTSTR
+  , wxClassName :: ClassName
+  , wxHIconSmall :: Maybe HICON
+  }
+
+data InvalidSizeException = InvalidSizeException UINT UINT
+  deriving Show
+instance Exception InvalidSizeException
+
+instance Storable WNDCLASSEXW where
+  sizeOf _ = #{size WNDCLASSEXW}
+  alignment _ = #{alignment WNDCLASSEXW}
+  peek p = do
+    cbSize <- #{peek WNDCLASSEXW,cbSize} p
+    when (cbSize /= #{size WNDCLASSEXW} ) $ 
+      throw $ InvalidSizeException #{size WNDCLASSEXW} cbSize
+    wxStyle'         <- #{peek WNDCLASSEXW,style} p 
+    wxWndProc'       <- #{peek WNDCLASSEXW,lpfnWndProc} p
+    wxClassExtra'    <- #{peek WNDCLASSEXW,cbClsExtra} p
+    wxWindowExtra'   <- #{peek WNDCLASSEXW,cbWndExtra} p
+    wxHInstance'     <- #{peek WNDCLASSEXW,hInstance} p
+    wxHIcon'         <- ptrToMaybe <$> #{peek WNDCLASSEXW,hIcon} p
+    wxHCursor'       <- ptrToMaybe <$> #{peek WNDCLASSEXW,hCursor} p
+    background       <- #{peek WNDCLASSEXW,hbrBackground} p
+    wxMenuName'      <- ptrToMaybe <$> #{peek WNDCLASSEXW,lpszMenuName} p
+    wxClassName'     <- #{peek WNDCLASSEXW,lpszClassName} p
+    wxHIconSmall'    <- ptrToMaybe <$> #{peek WNDCLASSEXW,hIconSm} p
+    let backgroundWord = fromIntegral $ ptrToIntPtr $ background
+    let wxBackground' 
+         | backgroundWord == 0 = Nothing
+         | backgroundWord - 1 `elem` systemColors = Just $ Right $ backgroundWord - 1
+         | otherwise = Just $ Left background
+    return WNDCLASSEXW 
+      { wxStyle        = wxStyle'         
+      , wxWndProc      = wxWndProc'       
+      , wxClassExtra   = wxClassExtra'    
+      , wxWindowExtra  = wxWindowExtra'   
+      , wxHInstance    = wxHInstance'     
+      , wxHIcon        = wxHIcon'         
+      , wxHCursor      = wxHCursor'       
+      , wxBackground   = wxBackground'
+      , wxMenuName     = wxMenuName'      
+      , wxClassName    = wxClassName'     
+      , wxHIconSmall   = wxHIconSmall'    
+      }
+  poke p wndClsEx = do
+    let cbSize = #{size WNDCLASSEXW} :: UINT
+    let background = maybePtr $ either id (intPtrToPtr . fromIntegral . (+) 1) <$> wxBackground wndClsEx
+    #{poke WNDCLASSEXW,cbSize} p         cbSize
+    #{poke WNDCLASSEXW,style} p          $ wxStyle wndClsEx
+    #{poke WNDCLASSEXW,lpfnWndProc} p    $ wxWndProc wndClsEx
+    #{poke WNDCLASSEXW,cbClsExtra} p     $ wxClassExtra wndClsEx
+    #{poke WNDCLASSEXW,cbWndExtra} p     $ wxWindowExtra wndClsEx
+    #{poke WNDCLASSEXW,hInstance} p      $ wxHInstance wndClsEx
+    #{poke WNDCLASSEXW,hIcon} p          (maybePtr $ wxHIcon wndClsEx)
+    #{poke WNDCLASSEXW,hCursor} p        (maybePtr $ wxHCursor wndClsEx)
+    #{poke WNDCLASSEXW,hbrBackground} p  background
+    #{poke WNDCLASSEXW,lpszMenuName} p   (maybePtr $ wxMenuName wndClsEx)
+    #{poke WNDCLASSEXW,lpszClassName} p  $ wxClassName wndClsEx
+    #{poke WNDCLASSEXW,hIconSm} p        (maybePtr $ wxHIconSmall wndClsEx)
+
+-- | Registers an extended window class. Since 'createWindowEx',
+-- 'setWindowClosure', 'defWindowProcSafe' and 'freeWindowProc' expect the
+-- 'gWLP_USERDATA' field of 'setWindowLongPtr' to refer to a window procedure
+-- which is called by the supplied 'genericWndProc_p', either set 'wxWndProc'
+-- to 'genericWndProc_p' or use 'c_CreateWindowEx' directly. If you use your
+-- own function pointer, remember to free it when you're done using
+-- 'freeHaskellFunPtr'.
+registerClassEx :: WNDCLASSEXW -> IO ATOM
+registerClassEx wndClassEx = 
+  failIfZero "RegisterClassExW" $ with wndClassEx c_RegisterClassExW
+
+foreign import ccall unsafe "RegisterClassExW" c_RegisterClassExW
+  :: Ptr WNDCLASSEXW -> IO ATOM
 
 ----------------------------------------------------------------
 -- Window Style
@@ -217,7 +305,7 @@ foreign import WINDOWS_CCONV "wrapper"
 setWindowClosure :: HWND -> WindowClosure -> IO (Maybe (FunPtr WindowClosure))
 setWindowClosure wnd closure = do
   fp <- mkWindowClosure closure
-  fpOld <- c_SetWindowLongPtr wnd (#{const GWLP_USERDATA})
+  fpOld <- c_SetWindowLongPtr wnd (gWLP_USERDATA)
                               (castPtr (castFunPtrToPtr fp))
   if fpOld == nullPtr 
      then return Nothing
@@ -250,6 +338,16 @@ foreign import WINDOWS_CCONV unsafe "windows.h GetWindowLongPtrW"
 # error Unknown mingw32 arch
 #endif
   c_GetWindowLongPtr :: HANDLE -> INT -> IO LONG_PTR
+
+type GetWindowLongPtr = INT
+#{enum GetWindowLongPtr,
+, gWLP_WNDPROC = GWLP_WNDPROC
+, gWLP_HINSTANCE = GWLP_HINSTANCE
+, gWLP_HWNDPARENT = GWLP_HWNDPARENT
+, gWLP_USERDATA = GWLP_USERDATA
+, gWLP_ID = GWLP_ID
+}
+
 
 
 -- | Creates a window with a default extended window style. If you create many
@@ -325,7 +423,7 @@ foreign import WINDOWS_CCONV "windows.h DefWindowProcW"
 -- default).
 freeWindowProc :: HWND -> IO ()
 freeWindowProc hwnd = do
-   fp <- c_GetWindowLongPtr hwnd (#{const GWLP_USERDATA})
+   fp <- c_GetWindowLongPtr hwnd gWLP_USERDATA
    unless (fp == 0) $ 
       freeHaskellFunPtr $ castPtrToFunPtr . intPtrToPtr . fromIntegral $ fp
 
@@ -552,6 +650,13 @@ childWindowFromPointEx parent pt flags =
 closeWindow :: HWND -> IO ()
 closeWindow wnd =
   failIfFalse_ "CloseWindow" $ c_DestroyWindow wnd
+
+foreign import ccall "window.h SetWindowPos"
+  c_setWindowPos :: HWND -> HWND -> INT -> INT -> INT -> INT -> UINT -> IO BOOL
+
+setWindowPos :: HWND -> HWND -> INT -> INT -> INT -> INT -> UINT -> IO ()
+setWindowPos hwnd hwndParent left top width height windowpos = 
+        failIfFalse_ "SetWindowPos" $ c_setWindowPos hwnd hwndParent left top width height windowpos 
 
 deferWindowPos :: HDWP -> HWND -> HWND -> Int -> Int -> Int -> Int -> SetWindowPosFlags -> IO HDWP
 deferWindowPos wp wnd after x y cx cy flags =
@@ -815,6 +920,11 @@ foreign import WINDOWS_CCONV "windows.h DispatchMessageW"
 
 foreign import WINDOWS_CCONV "windows.h SendMessageW"
   sendMessage :: HWND -> WindowMessage -> WPARAM -> LPARAM -> IO LRESULT
+
+----------------------------------------------------------------
+
+foreign import ccall "windows.h GetDpiForWindow" 
+  getDpiForWindow :: HWND -> IO DWORD
 
 ----------------------------------------------------------------
 
