@@ -7,9 +7,10 @@
 #define WINVER 0x0600
 
 module System.Win32.Info.Parameters 
-  ( getNonClientMetricsForDpi
-  , getNonClientMetrics
+  ( getNonClientMetrics
+  , getNonClientMetricsWithClosure
   , NONCLIENTMETRICSW(..)
+  , SPIUIAction
   , sPI_GETACCESSTIMEOUT 
   , sPI_GETFILTERKEYS 
   , sPI_GETFOCUSBORDERHEIGHT 
@@ -207,15 +208,6 @@ foreign import WINDOWS_CCONV unsafe "winuser.h SystemParametersInfoW"
      -> UINT
      -> LPVOID
      -> UINT 
-     -> IO BOOL
-
-foreign import WINDOWS_CCONV unsafe "winuser.h SystemParametersInfoForDpi"
-  c_SystemParametersInfoForDpi
-     :: SPIUIAction 
-     -> UINT
-     -> LPVOID
-     -> UINT 
-     -> UINT
      -> IO BOOL
 
 type SPIUIAction = UINT
@@ -475,27 +467,23 @@ peekNONCLIENTMETRICSW p = do
     , ncmPaddedBorderWidth = ncmPaddedBorderWidth'
     }
 
+sizeNONCLIENTMETRICS :: UINT
+sizeNONCLIENTMETRICS = (#{size NONCLIENTMETRICSW} :: UINT)
+
 getNonClientMetrics :: IO NONCLIENTMETRICSW
-getNonClientMetrics = do
+getNonClientMetrics = getNonClientMetricsWithClosure c_SystemParametersInfo 
+
+getNonClientMetricsWithClosure :: (SPIUIAction -> UINT -> LPVOID -> UINT -> IO BOOL) 
+                               -> IO NONCLIENTMETRICSW
+getNonClientMetricsWithClosure f = do
    allocaNONCLIENTMETRICSW $ \ p -> do
-   #{poke NONCLIENTMETRICSW,cbSize} p (#{size NONCLIENTMETRICSW} :: UINT)
-   failIfFalse_ "SystemParametersInfo" $ c_SystemParametersInfo 
+   #{poke NONCLIENTMETRICSW,cbSize} p sizeNONCLIENTMETRICS
+   failIfFalse_ "SystemParametersInfo" $ f 
       sPI_GETNONCLIENTMETRICS
       (#{size NONCLIENTMETRICSW})
       (castPtr p)
       0
    peekNONCLIENTMETRICSW p
 
-getNonClientMetricsForDpi :: UINT -> IO NONCLIENTMETRICSW
-getNonClientMetricsForDpi dpi = do
-   allocaNONCLIENTMETRICSW $ \ p -> do
-   #{poke NONCLIENTMETRICSW,cbSize} p (#{size NONCLIENTMETRICSW} :: UINT)
-   failIfFalse_ "SystemParametersInfoForDpi" $ c_SystemParametersInfoForDpi 
-      sPI_GETNONCLIENTMETRICS
-      (#{size NONCLIENTMETRICSW})
-      (castPtr p)
-      0
-      dpi
-   peekNONCLIENTMETRICSW p
       
       

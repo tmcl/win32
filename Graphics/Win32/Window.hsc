@@ -923,11 +923,6 @@ foreign import WINDOWS_CCONV "windows.h SendMessageW"
 
 ----------------------------------------------------------------
 
-foreign import ccall "windows.h GetDpiForWindow" 
-  getDpiForWindow :: HWND -> IO DWORD
-
-----------------------------------------------------------------
-
 -- ToDo: figure out reentrancy stuff
 -- ToDo: catch error codes
 --
