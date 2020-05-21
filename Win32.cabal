@@ -55,6 +55,7 @@ Library
         Graphics.Win32.Message
         Graphics.Win32.Misc
         Graphics.Win32.Resource
+        Graphics.Win32.Toolbar
         Graphics.Win32.Window
         Graphics.Win32.LayeredWindow
         Graphics.Win32.GDI.AlphaBlend
