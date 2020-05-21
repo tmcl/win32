@@ -64,6 +64,8 @@ type WindowMessage   = DWORD
  , wM_ICONERASEBKGND    = WM_ICONERASEBKGND
  , wM_NCPAINT           = WM_NCPAINT
  , wM_NCCALCSIZE        = WM_NCCALCSIZE
+ ,  wM_NCHITTEST = WM_NCHITTEST
+
  , wM_QUERYDRAGICON     = WM_QUERYDRAGICON
  , wM_DROPFILES         = WM_DROPFILES
  , wM_ACTIVATE          = WM_ACTIVATE
@@ -175,6 +177,36 @@ foreign import WINDOWS_CCONV unsafe "windows.h RegisterWindowMessageW"
  , sIZE_MAXSHOW         = SIZE_MAXSHOW
  , sIZE_MAXHIDE         = SIZE_MAXHIDE
  }
+
+-- These are WM_NCHITTEST specific
+#{enum LRESULT,
+, hTERROR           = HTERROR          
+, hTTRANSPARENT     = HTTRANSPARENT    
+, hTNOWHERE         = HTNOWHERE        
+, hTCLIENT          = HTCLIENT         
+, hTCAPTION         = HTCAPTION        
+, hTSYSMENU         = HTSYSMENU        
+, hTGROWBOX         = HTGROWBOX        
+, hTSIZE            = HTSIZE           
+, hTMENU            = HTMENU           
+, hTHSCROLL         = HTHSCROLL        
+, hTVSCROLL         = HTVSCROLL        
+, hTMINBUTTON       = HTMINBUTTON      
+, hTMAXBUTTON       = HTMAXBUTTON      
+, hTLEFT            = HTLEFT           
+, hTRIGHT           = HTRIGHT          
+, hTTOP             = HTTOP            
+, hTTOPLEFT         = HTTOPLEFT        
+, hTTOPRIGHT        = HTTOPRIGHT       
+, hTBOTTOM          = HTBOTTOM         
+, hTBOTTOMLEFT      = HTBOTTOMLEFT     
+, hTBOTTOMRIGHT     = HTBOTTOMRIGHT    
+, hTBORDER          = HTBORDER         
+, hTREDUCE          = HTREDUCE         
+, hTZOOM            = HTZOOM           
+, hTSIZEFIRST       = HTSIZEFIRST      
+, hTSIZELAST        = HTSIZELAST       
+}
 
 ----------------------------------------------------------------
 -- Phew!
