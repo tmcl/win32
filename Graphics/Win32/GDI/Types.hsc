@@ -101,9 +101,12 @@ type RECT =
   , LONG  -- bottom
   )
 
+sizeofRECT :: Int
+sizeofRECT = #{size RECT}
+
 allocaRECT :: (Ptr RECT -> IO a) -> IO a
 allocaRECT =
-  allocaBytes (#{size RECT})
+  allocaBytes sizeofRECT
 
 peekRECT :: Ptr RECT -> IO RECT
 peekRECT p = do
