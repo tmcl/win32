@@ -42,6 +42,7 @@ import System.Win32.Types (LPTSTR, LPVOID, withTString, peekTString)
 import System.Win32.Types (failIf, failIf_, failIfFalse_, failIfNull, failIfZero)
 import System.Win32.Types (maybeNum, failUnlessSuccess, getLastError, errorWin)
 import System.Win32.Info (SystemColor, systemColors)
+import Data.Bits
 
 ##include "windows_cconv.h"
 
@@ -935,3 +936,50 @@ foreign import WINDOWS_CCONV "windows.h SendMessageW"
 ----------------------------------------------------------------
 -- End
 ----------------------------------------------------------------
+
+foreign import WINDOWS_CCONV "windows.h RedrawWindow"
+  c_RedrawWindow :: HWND -> Ptr RECT -> PRGN -> RedrawFlags -> IO BOOL
+
+redrawWindow :: Maybe HWND -> Maybe RECT -> Maybe HRGN -> RedrawFlags -> IO ()
+redrawWindow hwnd rect hrgn redrawFlags = 
+  withMaybeRect rect $ \p_rect -> 
+    withMaybeHRGN hrgn $ \p_hrgn -> do
+      failIfFalse_ "RedrawWindow" $ c_RedrawWindow (maybePtr hwnd) p_rect p_hrgn redrawFlags
+  where 
+     withMaybeRect Nothing act = act nullPtr
+     withMaybeRect (Just rect) act = withRECT rect act
+
+     withMaybeHRGN Nothing act = act nullPtr
+     withMaybeHRGN (Just hrgn) act = withForeignPtr hrgn act
+
+newtype RedrawFlags = RedrawFlags UINT
+  deriving (Eq)
+
+instance Bits RedrawFlags where
+  RedrawFlags a .&. RedrawFlags b = RedrawFlags $ a .&. b
+  RedrawFlags a .|. RedrawFlags b = RedrawFlags $ a .|. b 
+  RedrawFlags a `xor` RedrawFlags b = RedrawFlags $ a `xor` b
+  complement (RedrawFlags it) = RedrawFlags $ complement it
+  RedrawFlags it `shift` n = RedrawFlags $ it `shift` n
+  RedrawFlags it `rotate` n = RedrawFlags $ it `rotate` n
+  bitSize (RedrawFlags it) = bitSize it
+  bitSizeMaybe (RedrawFlags it) = bitSizeMaybe it
+  isSigned (RedrawFlags it) = isSigned it
+  RedrawFlags it `testBit` n = it `testBit` n
+  bit n = RedrawFlags $ bit n
+  popCount (RedrawFlags it) = popCount it
+
+#{enum RedrawFlags, RedrawFlags
+, rDW_ERASE = RDW_ERASE
+, rDW_FRAME = RDW_FRAME
+, rDW_INTERNALPAINT = RDW_INTERNALPAINT
+, rDW_INVALIDATE = RDW_INVALIDATE
+, rDW_NOERASE = RDW_NOERASE
+, rDW_NOFRAME = RDW_NOFRAME
+, rDW_NOINTERNALPAINT = RDW_NOINTERNALPAINT
+, rDW_VALIDATE = RDW_VALIDATE
+, rDW_ERASENOW = RDW_ERASENOW
+, rDW_UPDATENOW = RDW_UPDATENOW
+, rDW_ALLCHILDREN = RDW_ALLCHILDREN
+, rDW_NOCHILDREN = RDW_NOCHILDREN
+}
