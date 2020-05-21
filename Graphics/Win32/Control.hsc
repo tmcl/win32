@@ -48,6 +48,7 @@ type ButtonStyle   = WindowStyle
  , bS_OWNERDRAW         = BS_OWNERDRAW
  , bS_LEFTTEXT          = BS_LEFTTEXT
  , bS_USERBUTTON        = BS_USERBUTTON
+ , bS_FLAT              = BS_FLAT
  }
 
 type MessageIdentifier = WORD
@@ -360,3 +361,8 @@ foreign import WINDOWS_CCONV unsafe "windows.h InitCommonControls"
 -- % , PBM_SETBARCOLOR
 -- % , PBM_SETBKCOLOR
 -- % , PBM_SETRANGE32
+
+#{enum WindowMessage,
+, bM_GETCHECK = BM_GETCHECK
+, bM_SETCHECK = BM_SETCHECK
+}
