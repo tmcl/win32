@@ -64,6 +64,7 @@ Library
         Graphics.Win32.Window.IMM
         Graphics.Win32.Window.ForegroundWindow
         Graphics.Win32.Window.PostMessage
+        Graphics.Win32.Theme
 
         Media.Win32
 
